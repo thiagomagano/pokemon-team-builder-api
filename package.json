@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "ts-node ./src/index.ts",
     "build": "tsc",
-    "start": "node ./dist/index.js"
+    "start": "node ./dist/index.js",
+    "test": "ts-node --transpile-only ./src/tests/test.ts"
   },
   "keywords": [],
   "author": "Thiago Magano",
@@ -16,6 +17,7 @@
     "@types/cors": "^2.8.12",
     "@types/express": "^4.17.13",
     "@types/node": "^17.0.25",
+    "axios": "^0.26.1",
     "cors": "^2.8.5",
     "express": "^4.17.3",
     "prisma": "^3.12.0"
@@ -24,5 +26,8 @@
     "prettier": "2.6.2",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.3"
+  },
+  "prisma": {
+    "seed": "ts-node --transpile-only prisma/seed.ts"
   }
 }
