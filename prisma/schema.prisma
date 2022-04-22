@@ -23,9 +23,12 @@ model Pokemon {
 }
 
 model Type {
-  id       Int       @id
-  name     String
+  id       Int
+  name     String    @unique
+  url      String
   pokemons Pokemon[]
+
+  @@id([name])
 }
 
 model Party {

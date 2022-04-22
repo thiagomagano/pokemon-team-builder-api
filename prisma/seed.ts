@@ -1,89 +1,106 @@
-import { PrismaClient, Prisma } from '@prisma/client'
+import { PrismaClient } from "@prisma/client";
 import axios from "axios";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 const api = axios.create({
-  baseURL:
-    "https://pokeapi.co/api/v2",
+  baseURL: "https://pokeapi.co/api/v2",
 });
 
-function transformTypeUrlToTypeId(url: String): Number {
-    let typeId = null;
-    
-    if (url.length === 33) typeId = parseInt(url.slice(31, 32))
-    
-    if (url.length === 34) typeId = parseInt(url.slice(31, 33))
-    
-    
-    return typeId
-}  
-async function getAllPokemons() {
-  
-  let pokemons = []
-  for (let i = 1; i <= 151; i++) {
-    const result = await api.get(`/pokemon/${i}/`)
-    const pokemonsData = result.data
-    pokemons = [...pokemons, {
-      id: pokemonsData.id,
-      name: pokemonsData.name,
-      avatarUrl: pokemonsData.sprites.front_default,
-      }]
-  }
+const POKEMON_NUMBER = 151;
 
-  return pokemons
+const arrayOfIds = [];
+
+for (let i = 1; i <= POKEMON_NUMBER; i++) {
+  arrayOfIds.push(i);
+}
+
+async function getAllPokemons() {
+  let pokemons = [];
+
+  const promises = arrayOfIds.map((i) => api.get(`/pokemon/${i}/`));
+
+  const result = await Promise.all(promises);
+
+  result.map((r) => {
+    const pokemonsData = r.data;
+
+    pokemons = [
+      ...pokemons,
+      {
+        id: pokemonsData.id,
+        name: pokemonsData.name,
+        avatarUrl: pokemonsData.sprites.front_default,
+        types: pokemonsData.types.map((t) => t.type["name"]),
+      },
+    ];
+  });
+
+  return pokemons;
 }
 
 async function getAllTypes() {
-  let types = []
-  
-  const result = await api.get(`https://pokeapi.co/api/v2/generation/1`)
-  const typesData = result.data.types
-  typesData.map(type => {
-    types = [...types, {
-      id: transformTypeUrlToTypeId(type.url),
-      name: type.name
-    }]
-  })
+  let types = [];
+
+  const result = await api.get(`https://pokeapi.co/api/v2/type`);
+  const typesData = result.data.results;
+  typesData.map((type, index) => {
+    types = [
+      ...types,
+      {
+        id: index,
+        name: type.name,
+        url: type.url,
+      },
+    ];
+  });
   return types;
 }
 
 async function seedTypes() {
-    const typesData = getAllTypes()
-    console.log(`Start seeding ...`)
-    for (const t of await typesData) {
-      const pokemon = await prisma.type.create({
-        data: t,
-      })
-      console.log(`Created type with id: ${pokemon.id}`)
-    }
-    console.log(`Seeding finished.`)
+  const typesData = getAllTypes();
+  console.log(`Start seeding ...`);
+  for (const t of await typesData) {
+    const type = await prisma.type.create({
+      data: t,
+    });
+    console.log(`Created type with id: ${type.id}`);
   }
-
-async function seedPokemons() {
-    
-    const pokemonsData = getAllPokemons()
-    console.log(`Start seeding ...`)
-    for (const p of await pokemonsData) {
-      const pokemon = await prisma.pokemon.create({
-        data: p,
-      })
-      console.log(`Created pokemon with id: ${pokemon.id}`)
-    }
-    console.log(`Seeding finished.`)
-  }
-  
-
-async function main() {
-  seedTypes()
-  //seedPokemons() 
+  console.log(`Seeding finished.`);
 }
 
+async function seedPokemons() {
+  const pokemonsData = await getAllPokemons();
+
+  console.log(`Start seeding ...`);
+
+  pokemonsData.map(async (data) => {
+    const pokemon = await prisma.pokemon.create({
+      data: {
+        id: data.id,
+        name: data.name,
+        avatarUrl: data.avatarUrl,
+        types: {
+          connect: !data.types[1]
+            ? { name: data.types[0] }
+            : [{ name: data.types[0] }, { name: data.types[1] }],
+        },
+      },
+    });
+    console.log(`Create Pokemon with id ${data.id}`);
+  });
+  console.log(`Create all Pokemons`);
+}
+
+async function main() {
+  seedTypes();
+  seedPokemons();
+}
 
 main()
   .catch((e) => {
-    console.error(e)
-    process.exit(1)
+    console.error(e);
+    process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect()
-  })
+    await prisma.$disconnect();
+  });
