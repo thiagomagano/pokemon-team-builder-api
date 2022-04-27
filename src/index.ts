@@ -68,7 +68,7 @@ app.get("/pokemons", async (req, res) => {
 });
 
 app.post("/party", async (req, res) => {
-  const MAX_NUMBER_OF_POKEMONS = 5;
+  const MAX_NUMBER_OF_POKEMONS = 6;
   const { title, pokemonList, userId } = req.body;
 
   if (pokemonList.length > MAX_NUMBER_OF_POKEMONS) {
