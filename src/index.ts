@@ -6,7 +6,11 @@ const prisma = new PrismaClient();
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+  })
+);
 
 // Porta do servidor
 const PORT = process.env.PORT || 3333;
@@ -16,23 +20,25 @@ app.get("/users", async (req, res) => {
   res.json(users);
 });
 
-app.post("/signup", async (req, res) => {
+app.post("/register", async (req, res) => {
   const { name, email } = req.body;
 
-  const result = await prisma.user
-    .create({
+  try {
+    const result = await prisma.user.create({
       data: {
         name,
         email,
       },
-    })
-    .catch((err) => console.log(err));
-
-  res.json(result);
+    });
+    res.json(result);
+  } catch (err) {
+    console.log(err);
+    res.status(409).json({ msg: "This Email is already taken" });
+  }
 });
 
-app.get("/login", async (req, res) => {
-  const email = req.query.email as string;
+app.post("/login", async (req, res) => {
+  const { email } = req.body;
   if (email) {
     try {
       const user = await prisma.user.findFirst({
@@ -45,9 +51,10 @@ app.get("/login", async (req, res) => {
         : res.status(404).json({ msg: "not found" });
     } catch (err) {
       console.log(err);
+      res.json({ msg: `Error`, error: err });
     }
   } else {
-    res.status(400).json({ msg: "You Should Pass a Email" });
+    res.status(400).json({ msg: `email field must be passed` });
   }
 });
 
@@ -110,6 +117,11 @@ app.get("/party", async (req, res) => {
     },
   });
   res.status(200).json(partys);
+});
+
+app.get("/types", async (req, res) => {
+  const types = await prisma.type.findMany();
+  res.json(types);
 });
 
 // Inicia o sevidor
