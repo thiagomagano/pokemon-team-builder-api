@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "ts-node ./src/index.ts",
     "build": "tsc",
-    "start": "node ./dist/index.js",
-    "test": "ts-node --transpile-only ./src/tests/test.ts",
-    "test2": "ts-node --transpile-only ./prisma/seed.ts"
+    "start": "node ./dist/src/index.js"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   },
   "keywords": [],
   "author": "Thiago Magano",
@@ -27,8 +28,5 @@
     "prisma": "^3.13.0",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.3"
-  },
-  "prisma": {
-    "seed": "ts-node --transpile-only prisma/seed.ts"
   }
 }

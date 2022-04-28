@@ -60,6 +60,11 @@ app.post("/login", async (req, res) => {
 
 app.get("/pokemons", async (req, res) => {
   const pokemons = await prisma.pokemon.findMany({
+    orderBy: [
+      {
+        id: "asc",
+      },
+    ],
     include: {
       types: true,
     },
