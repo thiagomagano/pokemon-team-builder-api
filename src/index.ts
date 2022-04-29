@@ -6,14 +6,7 @@ const prisma = new PrismaClient();
 const app = express();
 
 app.use(express.json());
-app.use(
-  cors({
-    origin: [
-      "https://pokemon-team-builder-br.vercel.app/",
-      "http://localhost:3000",
-    ],
-  })
-);
+app.use(cors());
 
 // Porta do servidor
 const PORT = process.env.PORT || 3333;
@@ -134,5 +127,5 @@ app.get("/types", async (req, res) => {
 
 // Inicia o sevidor
 app.listen(PORT, () => {
-  console.log(`Servidor rodando com sucesso http://localhost:${PORT}`);
+  console.log(`Servidor rodando com sucesso PORTA: ${PORT}`);
 });
