@@ -119,6 +119,18 @@ app.get("/party", async (req, res) => {
   });
   res.status(200).json(partys);
 });
+app.delete("/party", async (req, res) => {
+  let userId = parseInt(req.query.userId as string);
+  let { partyId } = req.body;
+
+  const deleteParty = await prisma.party.delete({
+    where: {
+      id: partyId,
+    },
+  });
+
+  res.status(200).json(deleteParty);
+});
 
 app.get("/types", async (req, res) => {
   const types = await prisma.type.findMany();
