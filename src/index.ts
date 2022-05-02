@@ -119,6 +119,7 @@ app.get("/party", async (req, res) => {
   });
   res.status(200).json(partys);
 });
+
 app.delete("/party", async (req, res) => {
   let userId = parseInt(req.query.userId as string);
   let { partyId } = req.body;
