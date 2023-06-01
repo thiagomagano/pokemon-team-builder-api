@@ -8,7 +8,7 @@ const api = axios.create({
 
 const POKEMON_NUMBER = 151;
 
-const arrayOfIds: number[] = [];
+const arrayOfIds = [];
 
 for (let i = 1; i <= POKEMON_NUMBER; i++) {
   arrayOfIds.push(i);
@@ -39,7 +39,7 @@ async function getAllPokemons() {
 }
 
 async function getAllTypes() {
-  let types: Type[] = [];
+  let types = [];
 
   const result = await api.get(`https://pokeapi.co/api/v2/type`);
   const typesData = result.data.results;
