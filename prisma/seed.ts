@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Type } from "@prisma/client";
 import axios from "axios";
 
 const prisma = new PrismaClient();
@@ -8,7 +8,7 @@ const api = axios.create({
 
 const POKEMON_NUMBER = 151;
 
-const arrayOfIds = [];
+const arrayOfIds: number[] = [];
 
 for (let i = 1; i <= POKEMON_NUMBER; i++) {
   arrayOfIds.push(i);
@@ -21,7 +21,7 @@ async function getAllPokemons() {
 
   const result = await Promise.all(promises);
 
-  result.map((r) => {
+  result.forEach((r) => {
     const pokemonsData = r.data;
 
     pokemons = [
@@ -39,7 +39,7 @@ async function getAllPokemons() {
 }
 
 async function getAllTypes() {
-  let types = [];
+  let types: Type[] = [];
 
   const result = await api.get(`https://pokeapi.co/api/v2/type`);
   const typesData = result.data.results;
@@ -73,8 +73,8 @@ async function seedPokemons() {
 
   console.log(`Start seeding ...`);
 
-  pokemonsData.map(async (data) => {
-    const pokemon = await prisma.pokemon.create({
+  pokemonsData.forEach(async (data) => {
+    await prisma.pokemon.create({
       data: {
         id: data.id,
         name: data.name,
@@ -92,8 +92,8 @@ async function seedPokemons() {
 }
 
 async function main() {
-  seedTypes();
-  seedPokemons();
+  await seedTypes();
+  await seedPokemons();
 }
 
 main()

@@ -68,24 +68,24 @@ app.get("/pokemons", async (req, res) => {
   res.json(pokemons);
 });
 
-app.post("/party", async (req, res) => {
+app.post("/team", async (req, res) => {
   const MAX_NUMBER_OF_POKEMONS = 6;
   const { title, pokemonList, userId } = req.body;
 
   if (pokemonList.length > MAX_NUMBER_OF_POKEMONS) {
     res.status(400).json({
-      msg: `Error to many pokemons in your party: ${MAX_NUMBER_OF_POKEMONS}`,
+      msg: `Error to many pokemons in your team: ${MAX_NUMBER_OF_POKEMONS}`,
     });
     return;
   }
   if (pokemonList.length === 0) {
     res.status(400).json({
-      msg: `Error your party needs to have at least one pokemon!`,
+      msg: `Error your team needs to have at least one pokemon!`,
     });
     return;
   }
 
-  const party = await prisma.party.create({
+  const team = await prisma.team.create({
     data: {
       title,
       pokemons: {
@@ -99,13 +99,13 @@ app.post("/party", async (req, res) => {
       pokemons: true,
     },
   });
-  res.json(party);
+  res.json(team);
 });
 
-app.get("/party", async (req, res) => {
+app.get("/team", async (req, res) => {
   let userId = parseInt(req.query.userId as string);
 
-  const partys = await prisma.party.findMany({
+  const teams = await prisma.team.findMany({
     where: {
       userId: userId,
     },
@@ -117,20 +117,20 @@ app.get("/party", async (req, res) => {
       },
     },
   });
-  res.status(200).json(partys);
+  res.status(200).json(teams);
 });
 
-app.delete("/party", async (req, res) => {
-  let userId = parseInt(req.query.userId as string);
-  let { partyId } = req.body;
+app.delete("/team", async (req, res) => {
+  // let userId = parseInt(req.query.userId as string);
+  let { teamId } = req.body;
 
-  const deleteParty = await prisma.party.delete({
+  const deleteTeam = await prisma.team.delete({
     where: {
-      id: partyId,
+      id: teamId,
     },
   });
 
-  res.status(200).json(deleteParty);
+  res.status(200).json(deleteTeam);
 });
 
 app.get("/types", async (req, res) => {

@@ -13,20 +13,20 @@ datasource db {
 }
 
 model User {
-  id     Int     @id @default(autoincrement())
-  email  String  @unique
-  name   String
-  partys Party[]
+  id    Int    @id @default(autoincrement())
+  email String @unique
+  name  String
+  Teams Team[]
 
   @@index([email])
 }
 
 model Pokemon {
-  id        Int     @id
+  id        Int    @id
   name      String
   types     Type[]
   avatarUrl String
-  Party     Party[]
+  Team      Team[]
 }
 
 model Type {
@@ -38,7 +38,7 @@ model Type {
   @@id([name])
 }
 
-model Party {
+model Team {
   id        Int       @id @default(autoincrement())
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
