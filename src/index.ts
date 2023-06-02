@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
+import userRoutes from "./routes/userRoutes";
 
 const prisma = new PrismaClient();
 const app = express();
@@ -11,10 +12,7 @@ app.use(cors());
 // Porta do servidor
 const PORT = process.env.PORT || 3333;
 
-app.get("/users", async (req, res) => {
-  const users = await prisma.user.findMany();
-  res.json(users);
-});
+app.use("/users", userRoutes);
 
 app.post("/register", async (req, res) => {
   const { name, email } = req.body;
