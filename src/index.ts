@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(cors());
 
 // Porta do servidor
-const PORT = process.env.NODE_LOCAL_PORT || 3333;
+const PORT = process.env.NODE_LOCAL_PORT || 6868;
 
 app.use("/users", userRoutes);
 
