@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
-import userRoutes from "./routes/userRoutes";
+import userRoutes from "./routes/userRoutes.js";
 
 const prisma = new PrismaClient();
 const app = express();
@@ -14,43 +14,41 @@ const PORT = process.env.NODE_LOCAL_PORT || 6868;
 
 app.use("/users", userRoutes);
 
-app.post("/register", async (req, res) => {
-  const { name, email } = req.body;
-
-  try {
-    const result = await prisma.user.create({
-      data: {
-        name,
-        email,
-      },
-    });
-    res.json(result);
-  } catch (err) {
-    console.log(err);
-    res.status(409).json({ msg: "This Email is already taken" });
-  }
-});
-
 app.post("/login", async (req, res) => {
-  const { email } = req.body;
-  if (email) {
-    try {
-      const user = await prisma.user.findFirst({
-        where: {
-          email,
-        },
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        msg: "Email field is required"
       });
-      user
-        ? res.status(200).json(user)
-        : res.status(404).json({ msg: "not found" });
-    } catch (err) {
-      console.log(err);
-      res.json({ msg: `Error`, error: err });
     }
-  } else {
-    res.status(400).json({ msg: `email field must be passed` });
+
+    const user = await findUserByEmail(email);
+
+    if (!user) {
+      return res.status(404).json({
+        msg: "User not found"
+      });
+    }
+
+    return res.status(200).json(user);
+
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({
+      msg: "Internal server error",
+      error: error
+    });
   }
 });
+
+// Helper function to find user by email
+async function findUserByEmail(email: string) {
+  return await prisma.user.findFirst({
+    where: { email }
+  });
+}
 
 app.get("/pokemons", async (req, res) => {
   const pokemons = await prisma.pokemon.findMany({
