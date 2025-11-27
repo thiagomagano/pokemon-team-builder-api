@@ -1,7 +1,5 @@
 import { prisma } from "../src/lib/prisma";
-
 import axios from "axios";
-
 
 const api = axios.create({
   baseURL: "https://pokeapi.co/api/v2",
@@ -9,97 +7,171 @@ const api = axios.create({
 
 const POKEMON_NUMBER = 151;
 
-const arrayOfIds = [];
+// Gera array de IDs de 1 a POKEMON_NUMBER
+const arrayOfIds: number[] = Array.from(
+  { length: POKEMON_NUMBER },
+  (_, i) => i + 1
+);
 
-for (let i = 1; i <= POKEMON_NUMBER; i++) {
-  arrayOfIds.push(i);
+interface PokemonData {
+  id: number;
+  name: string;
+  avatarUrl: string;
+  types: string[];
 }
 
-async function getAllPokemons() {
-  let pokemons = [];
+interface TypeData {
+  id: number;
+  name: string;
+  url: string;
+}
 
-  const promises = arrayOfIds.map((i) => api.get(`/pokemon/${i}/`));
+async function getAllPokemons(): Promise<PokemonData[]> {
+  const promises = arrayOfIds.map((id) =>
+    api.get(`/pokemon/${id}/`).catch((error) => {
+      console.error(`Erro ao buscar Pokemon ${id}:`, error.message);
+      return null;
+    })
+  );
 
-  const result = await Promise.all(promises);
+  const results = await Promise.all(promises);
 
-  result.forEach((r) => {
-    const pokemonsData = r.data;
+  const pokemons: PokemonData[] = [];
 
-    pokemons = [
-      ...pokemons,
-      {
-        id: pokemonsData.id,
-        name: pokemonsData.name,
-        avatarUrl: pokemonsData.sprites.front_default,
-        types: pokemonsData.types.map((t) => t.type["name"]),
-      },
-    ];
+  results.forEach((result) => {
+    if (!result || !result.data) return;
+
+    const pokemonData = result.data;
+    pokemons.push({
+      id: pokemonData.id,
+      name: pokemonData.name,
+      avatarUrl: pokemonData.sprites.front_default || "",
+      types: pokemonData.types.map((t: any) => t.type.name),
+    });
   });
 
   return pokemons;
 }
 
-async function getAllTypes() {
-  let types = [];
+async function getAllTypes(): Promise<TypeData[]> {
+  try {
+    const result = await api.get(`/type`);
+    const typesData = result.data.results;
 
-  const result = await api.get(`https://pokeapi.co/api/v2/type`);
-  const typesData = result.data.results;
-  typesData.map((type, index) => {
-    types = [
-      ...types,
-      {
-        id: index,
-        name: type.name,
-        url: type.url,
-      },
-    ];
-  });
-  return types;
+    return typesData.map((type: any, index: number) => ({
+      id: index + 1,
+      name: type.name,
+      url: type.url,
+    }));
+  } catch (error) {
+    console.error("Erro ao buscar tipos:", error);
+    throw error;
+  }
 }
 
 async function seedTypes() {
-  const typesData = getAllTypes();
-  console.log(`Start seeding ...`);
-  for (const t of await typesData) {
-    const type = await prisma.type.create({
-      data: t,
-    });
-    console.log(`Created type with id: ${type.id}`);
+  console.log(`Iniciando seed de tipos...`);
+
+  try {
+    const typesData = await getAllTypes();
+    let created = 0;
+    let skipped = 0;
+
+    for (const typeData of typesData) {
+      try {
+        await prisma.type.upsert({
+          where: { name: typeData.name },
+          update: {
+            id: typeData.id,
+            url: typeData.url,
+          },
+          create: {
+            id: typeData.id,
+            name: typeData.name,
+            url: typeData.url,
+          },
+        });
+        created++;
+        console.log(`✓ Tipo criado/atualizado: ${typeData.name}`);
+      } catch (error) {
+        console.error(`✗ Erro ao criar tipo ${typeData.name}:`, error);
+        skipped++;
+      }
+    }
+
+    console.log(`\nSeed de tipos concluído: ${created} criados/atualizados, ${skipped} com erro\n`);
+  } catch (error) {
+    console.error("Erro ao fazer seed de tipos:", error);
+    throw error;
   }
-  console.log(`Seeding finished.`);
 }
 
 async function seedPokemons() {
-  const pokemonsData = await getAllPokemons();
+  console.log(`Iniciando seed de pokemons...`);
 
-  console.log(`Start seeding ...`);
+  try {
+    const pokemonsData = await getAllPokemons();
+    let created = 0;
+    let skipped = 0;
 
-  pokemonsData.forEach(async (data) => {
-    await prisma.pokemon.create({
-      data: {
-        id: data.id,
-        name: data.name,
-        avatarUrl: data.avatarUrl,
-        types: {
-          connect: !data.types[1]
-            ? { name: data.types[0] }
-            : [{ name: data.types[0] }, { name: data.types[1] }],
-        },
-      },
-    });
-    console.log(`Create Pokemon with id ${data.id}`);
-  });
-  console.log(`Create all Pokemons`);
+    // Usa for...of para garantir que todas as operações sejam concluídas
+    for (const data of pokemonsData) {
+      try {
+        // Prepara os tipos para conectar
+        const typeConnections = data.types.map((typeName) => ({
+          name: typeName,
+        }));
+
+        await prisma.pokemon.upsert({
+          where: { id: data.id },
+          update: {
+            name: data.name,
+            avatarUrl: data.avatarUrl,
+            types: {
+              set: typeConnections,
+            },
+          },
+          create: {
+            id: data.id,
+            name: data.name,
+            avatarUrl: data.avatarUrl,
+            types: {
+              connect: typeConnections,
+            },
+          },
+        });
+
+        created++;
+        console.log(`✓ Pokemon criado/atualizado: ${data.name} (ID: ${data.id})`);
+      } catch (error) {
+        console.error(`✗ Erro ao criar Pokemon ${data.name} (ID: ${data.id}):`, error);
+        skipped++;
+      }
+    }
+
+    console.log(`\nSeed de pokemons concluído: ${created} criados/atualizados, ${skipped} com erro\n`);
+  } catch (error) {
+    console.error("Erro ao fazer seed de pokemons:", error);
+    throw error;
+  }
 }
 
 async function main() {
-  await seedTypes();
-  await seedPokemons();
+  console.log("=== Iniciando seed do banco de dados ===\n");
+
+  try {
+    await seedTypes();
+    await seedPokemons();
+    console.log("=== Seed concluído com sucesso! ===");
+  } catch (error) {
+    console.error("Erro durante o seed:", error);
+    throw error;
+  }
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error("Erro fatal no seed:", e);
     process.exit(1);
   })
   .finally(async () => {
