@@ -142,13 +142,13 @@ Go to the project directory
 Install dependencies
 
 ```bash
-  bun install
+  npm install
 ```
 
 Start the server
 
 ```bash
-  bun run dev
+  npm run dev
 ```
 
 ## Related

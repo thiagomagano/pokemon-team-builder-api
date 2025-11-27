@@ -142,13 +142,13 @@ Vá até a pasta do projeto
 Instale as dependências
 
 ```bash
-  bun install
+  npm install
 ```
 
 Rode o servidor de desenvolvimento
 
 ```bash
-  bun run dev
+  npm run dev
 ```
 
 ## Related

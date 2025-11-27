@@ -1,6 +1,6 @@
 node_modules
 dist
 .env
-package-lock.json
-prisma/dev.db
-prisma/generated
+dev.db
+generated
+/generated/prisma

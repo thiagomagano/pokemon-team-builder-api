@@ -1,7 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../src/lib/prisma";
+
 import axios from "axios";
 
-const prisma = new PrismaClient();
+
 const api = axios.create({
   baseURL: "https://pokeapi.co/api/v2",
 });
